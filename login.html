@@ -1,0 +1,403 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>qq</title>
+<style>
+*{margin:0; padding:0; text-decoration:none; list-style:none;}
+#page1{display:block;}
+.user_info_box{width:400px;height:300px; border:1px solid #000; border-radius:10px; background:#f1f1f1; margin:150px auto; position:relative; top:0; left:0;}
+.face_show_box{width:90px; height:90px; border:2px solid #ccc; border-radius:5px; position:absolute; left:50%; margin-left:-45px; top:-45px;}
+.face_show_box a{position:absolute; width:30px; height:30px; line-height:30px; text-align:center; background:rgba(0,0,0,0.5); top:50%; margin-top:-10px; color:#fff; font-weight:bold; display:none;}
+.face_show_box .prev{left:0;}
+.face_show_box .next{right:0;}
+.user_info_form{width:250px; margin:100px auto; text-align:center; font-size:18px; font-family:微软雅黑;}
+.user_info_form p{ padding:10px 0;}
+.user_info_form p a{display:inline-block; width:80px; height:35px; background:#06C; color:#fff; line-height:35px; text-align:center;}
+#page2{display:none;}
+.chat_box{width:800px; height:500px; background:#f1f1f1; border:1px solid #000; border-radius:5px; margin:80px auto;}
+.chat_header{ height:50px; border-bottom:1px solid #000; position:relative; top:0; left:0;}
+.chat_header .face_show{width:90px; height:90px; border:1px solid #ccc; border-radius:50%; overflow:hidden;  position:absolute; left:50px; top:-45px;}
+.chat_header a{position:absolute; right:20px; top:15px; color:#06C; font-weight:bold;}
+.chat_fn_box{overflow:hidden; height:450px;}
+.chat_l{float:left; width:498px; height:100%; position:relative; top:0; left:0;}
+.msg_box{width:498px; height:300px; position:relative; top:0; left:0; border-bottom:1px solid #000;}
+.msg_box .msg_list{width:478px; height:300px; position:relative; top:0; left:0; overflow:hidden;}
+.msg_box .msg_list ul{position:absolute; top:0; left:0;}
+.msg_list ul li{margin:10px 0;}
+.send_box{width:498px; height:150px; position:relative; top:0; left:0;}
+.send_box .msg_txt{width:100%; height:120px;}
+.send_box .send_btn{ position:absolute; bottom:5px; right:10px; width:50px; height:20px; background:#06C; text-align:center; color:#fff; line-height:20px;}
+.chat_r{float:right; width:300px; height:100%; border-left:2px solid #666; position:relative ;top:0; left:0;}
+.user_list{position:absolute; top:0; left:0; width:280px; height:100%; overflow:hidden;}
+.user_list ul{position:absolute; top:0; left:0;}
+.user_list ul li{height:30px; line-height:30px;  margin:5px 0 5px 10px;}
+.user_list ul li img{vertical-align:middle;}
+.user_list ul li strong{padding-left:10px;}
+.bar_box{position:absolute; top:0; right:0; width:20px; height:100%; background:#ccc;}
+.bar{width:20px; height:50px; background:#666; position:absolute; top:0; left:0;}
+
+
+</style>
+<script src="jsonp.js"></script>
+<script src="wheel.js"></script>
+<script>
+window.onload = function(){
+	var oFaceShowBox =document.getElementById('face_show_box');
+	var oAvatar = oFaceShowBox.children[0];	
+	var oPrev = oFaceShowBox.children[1];	
+	var oNext = oFaceShowBox.children[2];	
+	var oFaceNow = 1;
+	var token = null;
+	var uname = null;
+	var MaxId = null;
+	var timer = null;
+
+	var URL = 'http://www.zhinengshe.com/exercise/im/api.php';
+	//拖拽选择
+	var oUserBar = document.getElementById('user_bar');
+	var oUserBarBox = document.getElementById('bar_box');
+	var oUserListBox = document.getElementById('user_list_box');
+	var oUserListUl= document.getElementById('user_list_ul');
+	
+	var oMsgBar = document.getElementById('msg_bar');
+	var oMsgBarBox = document.getElementById('msg_bar_box');
+	
+	var oMsgList= document.getElementById('msg_list');
+	var oMsgListUl = oMsgList.children[0];
+	
+	//拖拽选择 结束
+	//毫秒转 日期时间
+	function getPostTime(time){
+		var oDate = new Date(time*1000);
+		return oDate.getFullYear()+'-'+toDou(oDate.getMonth()+1)+'-'+toDou(oDate.getDate())+' '+toDou(oDate.getHours())+':'+toDou(oDate.getMinutes())+':'+toDou(oDate.getSeconds());
+	}
+	//补零
+	function toDou(iNum){
+		return iNum<10?'0'+iNum:''+iNum;
+	}
+	oNext.onclick = function(){
+		oFaceNow++;
+		if(oFaceNow>8){oFaceNow = 1;}
+		oAvatar.src = 'imgs/'+oFaceNow+'.jpg';	
+	};
+	oPrev.onclick = function(){
+		oFaceNow--;
+		if(oFaceNow<1){oFaceNow = 8;}
+		oAvatar.src = 'imgs/'+oFaceNow+'.jpg';	
+	};
+	//注册
+	var oAddBtn = document.getElementById('add_btn');
+	var oUserName = document.getElementById('username');
+	var oPass = document.getElementById('pass');
+	oAddBtn.onclick = function(){
+		if(oUserName.value==''||oPass.value==''){alert('用户名或密码不能为空');return;}
+		jsonp({
+			url:'http://www.zhinengshe.com/exercise/im/api.php',
+			data:{
+				a:'reg',
+				user:oUserName.value,
+				pass:oPass.value,
+				face:oFaceNow	
+			},
+			success:function(json){
+				//console.log(json);
+				if(!json.err){
+					alert(json.msg);
+				}else{
+					alert(json.msg);
+				}
+			}	
+		});
+	};
+	//登录
+	var oPage1 = document.getElementById('page1');
+	var oPage2 = document.getElementById('page2');
+	var oLoginBtn = document.getElementById('login_btn');
+	oLoginBtn.onclick = function(){
+		if(oUserName.value==''||oPass.value==''){alert('用户名或密码不能为空');return;}
+		jsonp({
+			url:URL,
+			data:{
+				a:'lgn',
+				user:oUserName.value,
+				pass:oPass.value
+			},
+			success:function(json){
+				//console.log(json);
+				if(!json.err){
+					//登录成功
+					alert(json.msg);
+					uname = oUserName.value;
+					oPage1.style.display = 'none';
+					oPage2.style.display = 'block';
+					token = json.token;
+					//获取用户列表
+					getAllUser();
+					//获取历史消息
+					getOldMsg();
+					//获取更新信息
+					getUpdateMsg();
+				}else{
+					alert(json.msg);
+				}
+			}	
+		});
+	};
+	//获取用户
+
+	function getAllUser(){
+		jsonp({
+			url:URL,
+			data:{
+				a:'get_user_list',
+				token:token
+			},
+			success:function(json){
+				if(!json.err){
+					var arr = json.data;
+					//DOM
+					for(var i = 0;i<arr.length;i++){
+						var oLi = document.createElement('li');
+						oLi.innerHTML = '<img src="imgs/'+arr[i].face+'.jpg" width="30"><strong>'+arr[i].username+'</strong>';
+						oUserListUl.appendChild(oLi);	
+						
+					}
+					addDrag(oUserBar,oUserBarBox,oUserListUl,oUserListBox);
+				}else{
+					alert('获取用户列表失败');	
+				}
+			}	
+		});
+	}
+	//拖拽加滚动
+	function addDrag(oBar,oBarBox,oList,oListBox){
+		
+		//if(oBar == oMsgBar){}
+		oBar.style.top = oBarBox.offsetHeight - oBar.offsetHeight +'px';
+		oBar.onmousedown = function(ev){
+			
+			var oEvent = ev||event;
+			var disY = oEvent.clientY - oBar.offsetTop;
+			document.onmousemove = function(ev){
+				var oEvent = ev||event;
+				var t = oEvent.clientY - disY;
+				barMove(t);		
+			};
+			document.onmouseup = function(){
+				document.onmouseup = null;
+				document.onmousemove = null;
+			};
+			return false;
+		}
+		//滚动
+		addWheel(oListBox,function(bOk){
+			var t = oBar.offsetTop;
+			if(bOk){
+				t+=10;
+			}else{
+				t-=10;
+			}
+			barMove(t);
+		});	
+		function barMove(t){
+			if(t<0){
+				t = 0;
+			}else if(t>oBarBox.offsetHeight-oBar.offsetHeight){
+				t=oBarBox.offsetHeight-oBar.offsetHeight;
+			}
+			oBar.style.top = t +'px';
+			var scale =t/(oBarBox.offsetHeight-oBar.offsetHeight); 
+			oList.style.top = -(oList.scrollHeight -oListBox.offsetHeight)*scale+'px';
+			
+		}
+	}
+	
+	//获取历史消息
+	function getOldMsg(){
+		jsonp({
+			url:URL,
+			data:{
+				a:'get_msg',
+				token:token
+			},
+			success:function(json){
+				if(!json.err){
+					var arr = json.data;
+					for(var i = 0;i<arr.length;i++){
+						var oLi = createMsg(arr[i].id,arr[i].username,arr[i].post_time,arr[i].content);
+						oMsgListUl.appendChild(oLi);
+						MaxId = arr[i].id;
+					}
+					//拖拽加滚动
+					addDrag(oMsgBar,oMsgBarBox,oMsgListUl,oMsgList);
+				}
+			}	
+		});
+	}
+	function createMsg(id,name,time,conent){
+		var oLi = document.createElement('li');	
+	oLi.innerHTML = '<strong>'+name+'</strong><span>'+getPostTime(time)+'</span><p>'+conent+'</p>';
+		return oLi;
+	}
+	//发送留言
+	var oSendBtn = document.getElementById('send_btn');
+	var oMsgTxt = document.getElementById('msg_txt');
+	oSendBtn.onclick = function(){
+		//?a=snd_msg&content=内容&token=&cb=xxx
+//{err: 0, time: 发布时间, ID: 消息ID}
+		jsonp({
+			url:URL,
+			data:{
+				a:'snd_msg',
+				content:oMsgTxt.value,
+				token:token
+			},
+			success:function(json){
+				if(!json.err){
+					var oLi = createMsg(json.id,uname,json.time,oMsgTxt.value);
+					oMsgListUl.appendChild(oLi);
+					oMsgTxt.value = '';
+					oMsgBar.style.top = oMsgBarBox.offsetHeight - oMsgBar.offsetHeight +'px';
+					oMsgListUl.style.top = -(oMsgListUl.scrollHeight -oMsgList.offsetHeight)+'px';
+					MaxId = json.id;
+				}
+			}	
+		});	
+	};
+	//获取更新信息
+	function getUpdateMsg(){
+		timer = setInterval(function(){
+			jsonp({
+				url:URL,
+				data:{
+					a:'get_msg_n',
+					n:MaxId,
+					token:token
+				},
+				success:function(json){
+					if(!json.err){
+						var arr = json.data;
+						for(var i = 0;i<arr.length;i++){
+							var oLi = createMsg(arr[i].id,arr[i].username,arr[i].post_time,arr[i].content);
+							oMsgListUl.appendChild(oLi);
+							MaxId = arr[i].id;
+						}
+						oMsgBar.style.top = oMsgBarBox.offsetHeight - oMsgBar.offsetHeight +'px';
+						oMsgListUl.style.top = -(oMsgListUl.scrollHeight -oMsgList.offsetHeight)+'px';
+					}
+				}	
+			});
+		},3000);
+	}
+	//退出
+	//?a=logout&token=&cb=xxx
+	var logoutBtn = document.getElementById('logoutBtn');
+	logoutBtn.onclick = function(){
+		logOut();
+		
+	};
+	//?a=logout&token=&cb=xxx
+	function logOut(){
+		jsonp({
+			url:URL,
+			data:{
+				a:'logout',
+				token:token	
+			},
+			success:function(json){
+				if(!json.err){
+					alert('退出成功');
+					clearInterval(timer);
+					oPage1.style.display = 'block';
+					oPage2.style.display = 'none';
+					oUserName.value ='';
+					oPass.value = '';
+				}
+			}
+			
+		});
+	}
+};
+</script>
+</head>
+
+<body>
+<div id="page1">
+	<div class="user_info_box">
+		<div class="face_show_box" id="face_show_box">
+			<img src="imgs/1.jpg" alt="1" />
+			<a href="javascript:;" class="prev">&lt;</a>
+			<a href="javascript:;" class="next">&gt;</a>
+		</div>
+		<div class="user_info_form">
+			<p><label for="username">用户名:</label><input type="text" id="username" /></p>
+			<p><label for="pass">密&nbsp;&nbsp;&nbsp;&nbsp;码:</label><input type="password" id="pass" /></p>
+			<p>
+				<a href="javascript:;" id="add_btn">注册</a>
+				<a href="javascript:;" id="login_btn">登录</a>
+			</p>
+		</div>
+	</div>
+</div>
+<div id="page2">
+	<div class="chat_box">
+		<div class="chat_header">
+			<div class="face_show">
+				<img src="imgs/1.jpg" id="face_show"/>
+			</div>
+			<a href="javascript:;" id="logoutBtn">退出</a>
+		</div>
+		<div class="chat_fn_box">
+			<div class="chat_l">
+				<div class="msg_box">
+					<div class="msg_list" id="msg_list">
+						<ul id="msg_list_ul">
+							<!--<li>
+								<strong>失忆</strong>
+								<span>2015-12-30 00:00:00</span>
+								<p>信息。</p>
+							</li>-->
+						</ul>
+					</div>
+					<div class="bar_box" id="msg_bar_box">
+						<div class="bar" id="msg_bar"></div>
+					</div>
+				</div>
+				<div class="send_box">
+					<textarea class="msg_txt" id="msg_txt"></textarea>
+					<a href="javascript:;" class="send_btn" id="send_btn">发送</a>
+				</div>
+			</div>
+			<div class="chat_r">
+				<div class="user_list" id="user_list_box">
+					<ul id="user_list_ul">
+						<!--<li><img src="imgs/1.jpg" width=30 /><strong>用户</strong></li>-->
+					</ul>
+				</div>
+				<div class="bar_box" id="bar_box">
+					<div class="bar" id="user_bar"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
